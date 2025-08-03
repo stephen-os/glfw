@@ -1192,8 +1192,8 @@ static void inputText(_GLFWwindow* window, uint32_t scancode)
     if (xkb_state_key_get_syms(_glfw.wl.xkb.state, keycode, &keysyms) == 1)
     {
         const xkb_keysym_t keysym = composeSymbol(keysyms[0]);
-        const uint32_t codepoint = _glfwKeySym2Unicode(keysym);
-        if (codepoint != GLFW_INVALID_CODEPOINT)
+        const uint32_t codepoint = xkb_keysym_to_utf32(keysym);
+        if (codepoint != 0)
         {
             const int mods = _glfw.wl.xkb.modifiers;
             const int plain = !(mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT));
@@ -1267,17 +1267,21 @@ static void handleEvents(double* timeout)
 
             if (read(_glfw.wl.keyRepeatTimerfd, &repeats, sizeof(repeats)) == 8)
             {
-                for (uint64_t i = 0; i < repeats; i++)
+                if(_glfw.wl.keyboardFocus)
                 {
-                    _glfwInputKey(_glfw.wl.keyboardFocus,
-                                  translateKey(_glfw.wl.keyRepeatScancode),
-                                  _glfw.wl.keyRepeatScancode,
-                                  GLFW_PRESS,
-                                  _glfw.wl.xkb.modifiers);
-                    inputText(_glfw.wl.keyboardFocus, _glfw.wl.keyRepeatScancode);
+                    for (uint64_t i = 0; i < repeats; i++)
+                    {
+                        _glfwInputKey(_glfw.wl.keyboardFocus,
+                                      translateKey(_glfw.wl.keyRepeatScancode),
+                                      _glfw.wl.keyRepeatScancode,
+                                      GLFW_PRESS,
+                                      _glfw.wl.xkb.modifiers);
+                        inputText(_glfw.wl.keyboardFocus, _glfw.wl.keyRepeatScancode);
+                    }
+
+                    event = GLFW_TRUE;
                 }
 
-                event = GLFW_TRUE;
             }
         }
 
@@ -1329,6 +1333,7 @@ static char* readDataOfferAsString(struct wl_data_offer* offer, const char* mime
             if (!longer)
             {
                 _glfwInputError(GLFW_OUT_OF_MEMORY, NULL);
+                _glfw_free(string);
                 close(fds[0]);
                 return NULL;
             }
@@ -1348,6 +1353,7 @@ static char* readDataOfferAsString(struct wl_data_offer* offer, const char* mime
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "Wayland: Failed to read from data offer pipe: %s",
                             strerror(errno));
+            _glfw_free(string);
             close(fds[0]);
             return NULL;
         }
@@ -2183,7 +2189,12 @@ void _glfwDestroyWindowWayland(_GLFWwindow* window)
         _glfw.wl.pointerFocus = NULL;
 
     if (window == _glfw.wl.keyboardFocus)
+	{
+		struct itimerspec timer = {0};
+		timerfd_settime(_glfw.wl.keyRepeatTimerfd, 0, &timer, NULL);
+
         _glfw.wl.keyboardFocus = NULL;
+	}
 
     if (window->wl.fractionalScale)
         wp_fractional_scale_v1_destroy(window->wl.fractionalScale);
@@ -2721,23 +2732,23 @@ const char* _glfwGetScancodeNameWayland(int scancode)
         return NULL;
     }
 
-    const uint32_t codepoint = _glfwKeySym2Unicode(keysyms[0]);
-    if (codepoint == GLFW_INVALID_CODEPOINT)
+    // WORKAROUND: xkb_keysym_to_utf8() requires the third parameter (size of the output buffer)
+    // to be at least 7 (6 bytes + a null terminator), because it was written when UTF-8
+    // sequences could be up to 6 bytes long. The _glfw.wl.keynames buffers are only 5 bytes
+    // long, because UTF-8 sequences are now limited to 4 bytes and no codepoints were ever assigned
+    // that needed more than that. To work around this, we first copy to a temporary buffer.
+    //
+    // See: https://github.com/xkbcommon/libxkbcommon/issues/418
+    char temp_buffer[7];
+    const int bytes_written = xkb_keysym_to_utf8(keysyms[0], temp_buffer, sizeof(temp_buffer));
+    if (bytes_written <= 0 || bytes_written > 5)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Failed to retrieve codepoint for key name");
+                        "Wayland: Failed to encode keysym as UTF-8");
         return NULL;
     }
+    memcpy(_glfw.wl.keynames[key], temp_buffer, bytes_written);
 
-    const size_t count = _glfwEncodeUTF8(_glfw.wl.keynames[key],  codepoint);
-    if (count == 0)
-    {
-        _glfwInputError(GLFW_PLATFORM_ERROR,
-                        "Wayland: Failed to encode codepoint for key name");
-        return NULL;
-    }
-
-    _glfw.wl.keynames[key][count] = '\0';
     return _glfw.wl.keynames[key];
 }
 
