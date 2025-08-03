@@ -941,6 +941,22 @@ extern "C" {
  */
 #define GLFW_POSITION_Y             0x0002000F
 
+/*! @brief Window title bar background color window hint.
+ *
+ *  Window title bar background color [window hint](@ref GLFW_TITLEBAR_COLOR_hint).
+ *  This hint specifies the RGB color value for the window's title bar background.
+ *  The color should be specified as a 32-bit integer in 0xRRGGBB format.
+ */
+#define GLFW_TITLEBAR_COLOR         0x00020010
+
+/*! @brief Window title bar text color window hint.
+ *
+ *  Window title bar text color [window hint](@ref GLFW_TITLEBAR_TEXT_COLOR_hint).
+ *  This hint specifies the RGB color value for the window's title bar text.
+ *  The color should be specified as a 32-bit integer in 0xRRGGBB format.
+ */
+#define GLFW_TITLEBAR_TEXT_COLOR    0x00020011
+
 /*! @brief Framebuffer bit depth hint.
  *
  *  Framebuffer bit depth [hint](@ref GLFW_RED_BITS).
@@ -3363,6 +3379,60 @@ GLFWAPI const char* glfwGetWindowTitle(GLFWwindow* window);
  *  @ingroup window
  */
 GLFWAPI void glfwSetWindowTitle(GLFWwindow* window, const char* title);
+
+/*! @brief Sets the title bar background color of the specified window.
+ *
+ *  This function sets the background color of the title bar for the specified window.
+ *  The color is specified as separate red, green and blue components in the range 0-255.
+ *
+ *  @param[in] window The window whose title bar color to set.
+ *  @param[in] r The red component of the color (0-255).
+ *  @param[in] g The green component of the color (0-255).
+ *  @param[in] b The blue component of the color (0-255).
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @since Added in version 3.5.
+ *
+ *  @ingroup window
+ */
+GLFWAPI void glfwSetWindowTitleBarColor(GLFWwindow* window, int r, int g, int b);
+
+/*! @brief Sets the title bar text color of the specified window.
+ *
+ *  This function sets the text color of the title bar for the specified window.
+ *  The color is specified as separate red, green and blue components in the range 0-255.
+ *
+ *  @param[in] window The window whose title bar text color to set.
+ *  @param[in] r The red component of the color (0-255).
+ *  @param[in] g The green component of the color (0-255).
+ *  @param[in] b The blue component of the color (0-255).
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @since Added in version 3.5.
+ *
+ *  @ingroup window
+ */
+GLFWAPI void glfwSetWindowTitleBarTextColor(GLFWwindow* window, int r, int g, int b);
+
+/*! @brief Retrieves the title bar color of the specified window.
+ *
+ *  This function retrieves the background color of the title bar for the specified window.
+ *  The color is returned as separate red, green and blue components in the range 0-255.
+ *
+ *  @param[in] window The window whose title bar color to retrieve.
+ *  @param[out] r Where to store the red component of the color, or `NULL`.
+ *  @param[out] g Where to store the green component of the color, or `NULL`.
+ *  @param[out] b Where to store the blue component of the color, or `NULL`.
+ *
+ *  @thread_safety This function must only be called from the main thread.
+ *
+ *  @since Added in version 3.5.
+ *
+ *  @ingroup window
+ */
+GLFWAPI void glfwGetWindowTitleBarColor(GLFWwindow* window, int* r, int* g, int* b);
 
 /*! @brief Sets the icon for the specified window.
  *

@@ -545,6 +545,57 @@ GLFWAPI void glfwSetWindowTitle(GLFWwindow* handle, const char* title)
     _glfw_free(prev);
 }
 
+GLFWAPI void glfwSetWindowTitleBarColor(GLFWwindow* handle, int r, int g, int b)
+{
+    _GLFWwindow* window = (_GLFWwindow*)handle;
+    assert(window != NULL);
+    assert(r >= 0 && r <= 255);
+    assert(g >= 0 && g <= 255);
+    assert(b >= 0 && b <= 255);
+
+    _GLFW_REQUIRE_INIT();
+
+    // Convert RGB to packed format
+    window->titlebarColor = (r << 16) | (g << 8) | b;
+    window->customTitlebar = GLFW_TRUE;
+
+    // Apply the change if not in fullscreen
+    if (!window->monitor)
+        _glfw.platform.setWindowTitleBarColor(window, window->titlebarColor);
+}
+
+GLFWAPI void glfwSetWindowTitleBarTextColor(GLFWwindow* handle, int r, int g, int b)
+{
+    _GLFWwindow* window = (_GLFWwindow*)handle;
+    assert(window != NULL);
+    assert(r >= 0 && r <= 255);
+    assert(g >= 0 && g <= 255);
+    assert(b >= 0 && b <= 255);
+
+    _GLFW_REQUIRE_INIT();
+
+    // Convert RGB to packed format
+    window->titlebarTextColor = (r << 16) | (g << 8) | b;
+    window->customTitlebar = GLFW_TRUE;
+
+    // Apply the change if not in fullscreen
+    if (!window->monitor)
+        _glfw.platform.setWindowTitleBarTextColor(window, window->titlebarTextColor);
+}
+
+GLFWAPI void glfwGetWindowTitleBarColor(GLFWwindow* handle, int* r, int* g, int* b)
+{
+    _GLFWwindow* window = (_GLFWwindow*)handle;
+    assert(window != NULL);
+
+    _GLFW_REQUIRE_INIT();
+
+    // Extract RGB components from packed format
+    if (r) *r = (window->titlebarColor >> 16) & 0xFF;
+    if (g) *g = (window->titlebarColor >> 8) & 0xFF;
+    if (b) *b = window->titlebarColor & 0xFF;
+}
+
 GLFWAPI void glfwSetWindowIcon(GLFWwindow* handle,
                                int count, const GLFWimage* images)
 {

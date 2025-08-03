@@ -2579,5 +2579,57 @@ GLFWAPI HWND glfwGetWin32Window(GLFWwindow* handle)
     return window->win32.handle;
 }
 
+void _glfwSetWindowTitleBarColorWin32(_GLFWwindow* window, int color)
+{
+    // For Windows 11, we can use the native title bar color API
+    if (_glfwIsWindows10BuildOrGreaterWin32(22000)) // Windows 11 build number
+    {
+        COLORREF titleBarColor = RGB((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+        HRESULT hr = DwmSetWindowAttribute(window->win32.handle,
+            DWMWA_CAPTION_COLOR,
+            &titleBarColor,
+            sizeof(titleBarColor));
+
+        if (SUCCEEDED(hr))
+            return;
+    }
+
+    // For older Windows versions or if the above fails, we need custom implementation
+    // This would require removing the native title bar and drawing our own
+    // For now, we'll enable dark mode as a fallback
+    BOOL darkMode = TRUE;
+    DwmSetWindowAttribute(window->win32.handle,
+        DWMWA_USE_IMMERSIVE_DARK_MODE,
+        &darkMode,
+        sizeof(darkMode));
+
+    // Store the color for potential future custom drawing
+    window->titlebarColor = color;
+}
+
+void _glfwSetWindowTitleBarTextColorWin32(_GLFWwindow* window, int color)
+{
+    // For Windows 11, we can use the native title bar text color API
+    if (_glfwIsWindows10BuildOrGreaterWin32(22000)) // Windows 11 build number
+    {
+        COLORREF textColor = RGB((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+        HRESULT hr = DwmSetWindowAttribute(window->win32.handle,
+            DWMWA_TEXT_COLOR,
+            &textColor,
+            sizeof(textColor));
+
+        if (SUCCEEDED(hr))
+            return;
+    }
+
+    // For older Windows versions, this is more complex and would require
+    // custom drawing implementation. For now, we'll store the color.
+    window->titlebarTextColor = color;
+
+    // Log that full implementation is not available on older Windows
+    _glfwInputError(GLFW_PLATFORM_ERROR,
+        "Win32: Title bar text color customization requires Windows 11 or custom drawing implementation");
+}
+
 #endif // _GLFW_WIN32
 
