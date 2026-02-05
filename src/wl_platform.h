@@ -478,6 +478,8 @@ typedef struct _GLFWlibraryWayland
         double                  pointerY;
         double                  scrollX;
         double                  scrollY;
+        double                  discreteX;
+        double                  discreteY;
         int                     button;
         int                     action;
     } pending;

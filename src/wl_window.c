@@ -55,10 +55,11 @@
 #define GLFW_BORDER_SIZE    4
 #define GLFW_CAPTION_HEIGHT 24
 
-#define GLFW_PENDING_SURFACE 1
-#define GLFW_PENDING_BUTTON  2
-#define GLFW_PENDING_MOTION  4
-#define GLFW_PENDING_SCROLL  8
+#define GLFW_PENDING_SURFACE    1
+#define GLFW_PENDING_BUTTON     2
+#define GLFW_PENDING_MOTION     4
+#define GLFW_PENDING_SCROLL     8
+#define GLFW_PENDING_DISCRETE   16
 
 static int createTmpfileCloexec(char* tmpname)
 {
@@ -1740,7 +1741,9 @@ static void pointerHandleFrame(void* userData, struct wl_pointer* pointer)
     if (_glfw.wl.pending.events & GLFW_PENDING_BUTTON)
         processPointerButton(_glfw.wl.pending.button, _glfw.wl.pending.action);
 
-    if (_glfw.wl.pending.events & GLFW_PENDING_SCROLL)
+    if (_glfw.wl.pending.events & GLFW_PENDING_DISCRETE)
+        processPointerScroll(_glfw.wl.pending.discreteX, _glfw.wl.pending.discreteY);
+    else if (_glfw.wl.pending.events & GLFW_PENDING_SCROLL)
         processPointerScroll(_glfw.wl.pending.scrollX, _glfw.wl.pending.scrollY);
 
     memset(&_glfw.wl.pending, 0, sizeof(_glfw.wl.pending));
@@ -1766,6 +1769,21 @@ static void pointerHandleAxisDiscrete(void* userData,
 {
 }
 
+static void pointerHandleAxisValue120(void* data,
+                                      struct wl_pointer* pointer,
+                                      uint32_t axis,
+                                      int32_t value120)
+{
+    if (!_glfw.wl.pointerSurface)
+        return;
+
+    _glfw.wl.pending.events |= GLFW_PENDING_DISCRETE;
+    if (axis == WL_POINTER_AXIS_HORIZONTAL_SCROLL)
+        _glfw.wl.pending.discreteX = -(value120 / 120.0);
+    else if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
+        _glfw.wl.pending.discreteY = -(value120 / 120.0);
+}
+
 static const struct wl_pointer_listener pointerListener =
 {
     pointerHandleEnter,
@@ -1776,7 +1794,8 @@ static const struct wl_pointer_listener pointerListener =
     pointerHandleFrame,
     pointerHandleAxisSource,
     pointerHandleAxisStop,
-    pointerHandleAxisDiscrete
+    pointerHandleAxisDiscrete,
+    pointerHandleAxisValue120
 };
 
 static void keyboardHandleKeymap(void* userData,
@@ -1799,7 +1818,7 @@ static void keyboardHandleKeymap(void* userData,
         return;
     }
 
-    mapStr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+    mapStr = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapStr == MAP_FAILED)
     {
         close(fd);
