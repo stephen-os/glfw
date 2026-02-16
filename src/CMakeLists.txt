@@ -145,12 +145,10 @@ endif()
 if (GLFW_BUILD_COCOA)
     target_link_libraries(glfw PRIVATE "-framework Cocoa"
                                        "-framework IOKit"
-                                       "-framework CoreFoundation"
                                        "-framework QuartzCore")
 
     list(APPEND glfw_PKG_LIBS "-framework Cocoa"
                               "-framework IOKit"
-                              "-framework CoreFoundation"
                               "-framework QuartzCore")
 endif()
 
@@ -234,6 +232,11 @@ if (UNIX AND NOT APPLE)
         target_link_libraries(glfw PRIVATE "${CMAKE_DL_LIBS}")
         list(APPEND glfw_PKG_LIBS "-l${CMAKE_DL_LIBS}")
     endif()
+endif()
+
+if (APPLE)
+    target_link_libraries(glfw PRIVATE "-framework CoreFoundation")
+    list(APPEND glfw_PKG_LIBS "-framework CoreFoundation")
 endif()
 
 if (WIN32)
