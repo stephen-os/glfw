@@ -207,6 +207,7 @@
 #endif
 
 #if defined(_GLFW_WAYLAND) || defined(_GLFW_X11)
+ #include "posix_poll.h"
  #define GLFW_BUILD_POSIX_POLL
 #endif
 
