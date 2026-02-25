@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <float.h>
-
+#include <math.h>
 
 //////////////////////////////////////////////////////////////////////////
 //////                         GLFW event API                       //////
@@ -135,9 +135,9 @@ void _glfwInputWindowContentScale(_GLFWwindow* window, float xscale, float yscal
 {
     assert(window != NULL);
     assert(xscale > 0.f);
-    assert(xscale < FLT_MAX);
+    assert(isfinite(xscale));
     assert(yscale > 0.f);
-    assert(yscale < FLT_MAX);
+    assert(isfinite(yscale));
 
     if (window->callbacks.scale)
         window->callbacks.scale((GLFWwindow*) window, xscale, yscale);
@@ -776,7 +776,7 @@ GLFWAPI float glfwGetWindowOpacity(GLFWwindow* handle)
 
 GLFWAPI void glfwSetWindowOpacity(GLFWwindow* handle, float opacity)
 {
-    assert(opacity == opacity);
+    assert(isfinite(opacity));
     assert(opacity >= 0.f);
     assert(opacity <= 1.f);
 
@@ -785,7 +785,7 @@ GLFWAPI void glfwSetWindowOpacity(GLFWwindow* handle, float opacity)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     assert(window != NULL);
 
-    if (opacity != opacity || opacity < 0.f || opacity > 1.f)
+    if (!isfinite(opacity) || opacity < 0.f || opacity > 1.f)
     {
         _glfwInputError(GLFW_INVALID_VALUE, "Invalid window opacity %f", opacity);
         return;
@@ -1178,11 +1178,10 @@ GLFWAPI void glfwWaitEvents(void)
 GLFWAPI void glfwWaitEventsTimeout(double timeout)
 {
     _GLFW_REQUIRE_INIT();
-    assert(timeout == timeout);
+    assert(isfinite(timeout));
     assert(timeout >= 0.0);
-    assert(timeout <= DBL_MAX);
 
-    if (timeout != timeout || timeout < 0.0 || timeout > DBL_MAX)
+    if (!isfinite(timeout) || timeout < 0.0)
     {
         _glfwInputError(GLFW_INVALID_VALUE, "Invalid time %f", timeout);
         return;
