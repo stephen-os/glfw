@@ -195,7 +195,7 @@ const _GLFWfbconfig* _glfwChooseFBConfig(const _GLFWfbconfig* desired,
     {
         current = alternatives + i;
 
-        if (desired->stereo > 0 && current->stereo == 0)
+        if (desired->stereo && !current->stereo)
         {
             // Stereo is a hard constraint
             continue;

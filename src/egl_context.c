@@ -650,7 +650,7 @@ GLFWbool _glfwCreateContextEGL(_GLFWwindow* window,
         if (ctxconfig->noerror)
         {
             if (_glfw.egl.KHR_create_context_no_error)
-                SET_ATTRIB(EGL_CONTEXT_OPENGL_NO_ERROR_KHR, GLFW_TRUE);
+                SET_ATTRIB(EGL_CONTEXT_OPENGL_NO_ERROR_KHR, true);
         }
 
         if (mask)
