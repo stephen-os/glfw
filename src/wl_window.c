@@ -2726,6 +2726,8 @@ void _glfwHideWindowWayland(_GLFWwindow* window)
 
         wl_surface_attach(window->wl.surface, NULL, 0, 0);
         wl_surface_commit(window->wl.surface);
+
+        flushDisplay();
     }
 }
 
