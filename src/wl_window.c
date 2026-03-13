@@ -2324,8 +2324,11 @@ GLFWbool _glfwWaitForEGLFrameWayland(_GLFWwindow* window)
 
     while (window->wl.egl.callback)
     {
-        while (wl_display_prepare_read_queue(_glfw.wl.display, window->wl.egl.queue) != 0)
+        if (wl_display_prepare_read_queue(_glfw.wl.display, window->wl.egl.queue) != 0)
+        {
             wl_display_dispatch_queue_pending(_glfw.wl.display, window->wl.egl.queue);
+            continue;
+        }
 
         if (!flushDisplay())
         {
