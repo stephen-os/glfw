@@ -102,3 +102,10 @@ tests/triangle-vulkan
 tests/window
 tests/windows
 
+
+# Build artifacts
+bin/
+bin-int/
+*.vcxproj
+*.vcxproj.filters
+premake5.lua
